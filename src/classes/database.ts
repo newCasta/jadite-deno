@@ -8,7 +8,7 @@ export class Database {
 		this.#filePath = filePath
 	}
 
-	private async initCollection(name: string) {
+	async #initCollection(name: string) {
 		const decoder = new TextDecoder('utf-8')
 		const encoder = new TextEncoder()
 		let encodedData = await Deno.readFile(this.#filePath)
@@ -33,7 +33,7 @@ export class Database {
 	}
 
 	async collection<CSchema extends JSONDocument>(name: string) {
-		await this.initCollection(name)
+		await this.#initCollection(name)
 
 		return new Collection<CSchema>(name, this.#filePath)
 	}
