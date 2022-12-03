@@ -156,3 +156,54 @@ Deno.test('Check if get all documents of the table', async () => {
 
 	await Deno.remove(filePath)
 })
+
+Deno.test('Check if document is updated with the id', async () => {
+	const decoder = new TextDecoder('utf-8')
+	const db = await client.database('test')
+	const coll = await db.collection<Test>('test')
+
+	const document = await coll.insertOne({
+		name: 'test',
+		desc: 'is a test'
+	})
+	const id = document.toObject().id
+
+	const encodedFile = await Deno.readFile(filePath)
+	const fileData: JSONDatabase<Test> = JSON.parse(decoder.decode(encodedFile))
+
+	const newDocument = await coll.findByIdAndUpdate(id, { name: 'test 2' })
+
+	assertEquals(
+		newDocument?.toObject().name !== 'test',
+		fileData.test[0].name === 'test'
+	)
+
+	await Deno.remove(filePath)
+})
+
+Deno.test('Check if document is deleted with the id', async () => {
+	const decoder = new TextDecoder('utf-8')
+	const db = await client.database('test')
+	const coll = await db.collection<Test>('test')
+
+	const document = await coll.insertMany([
+		{
+			name: 'test',
+			desc: 'is a test'
+		},
+		{
+			name: 'test 2',
+			desc: 'is a test 2'
+		}
+	])
+	const id = document[1].toObject().id
+
+	const encodedFile = await Deno.readFile(filePath)
+	const fileData: JSONDatabase<Test> = JSON.parse(decoder.decode(encodedFile))
+
+	await coll.findByIdAndDelete(id)
+
+	assertEquals((await coll.find()).length === 1, fileData.test.length === 2)
+
+	await Deno.remove(filePath)
+})
